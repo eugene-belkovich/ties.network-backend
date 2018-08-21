@@ -1,0 +1,278 @@
+service: ties-network-backend
+
+custom:
+  local_auth_arn: arn:aws:cognito-idp:eu-central-1:047092440430:userpool/eu-central-1_3B0jBlDt9
+  dev_auth_arn: arn:aws:cognito-idp:eu-central-1:047092440430:userpool/eu-central-1_a6LJbsYva
+  prod_auth_arn: arn:aws:cognito-idp:eu-central-1:047092440430:userpool/eu-central-1_ViyduVBM0
+
+  local_protocol: http
+  dev_protocol: https
+  prod_protocol: https
+
+  local_domain: localhost:3000
+  dev_domain: dev-dashboard.ties.network
+  prod_domain: dashboard.ties.network
+
+  local_allowed_origin: http://localhost:3000
+  dev_allowed_origin: https://dev-dashboard.ties.network
+  prod_allowed_origin: https://dashboard.ties.network
+
+  local_site_allowed_origin: http://localhost:3000
+  dev_site_allowed_origin: http://dev-ties.network.s3-website.eu-central-1.amazonaws.com
+  prod_site_allowed_origin: https://ties.network
+
+  local_contract: '0xcD9ef504Ba0c748FB16bB32875E668495414076B'
+  dev_contract: '0xcD9ef504Ba0c748FB16bB32875E668495414076B'
+  prod_contract: '0xcD9ef504Ba0c748FB16bB32875E668495414076B'
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: eu-central-1
+  role: arn:aws:iam::047092440430:role/sls-role
+
+functions:
+
+  assignBtcWallet:
+    handler: functions/btc.assign
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: me/btc
+          method: post
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+
+  setEther:
+    handler: functions/ether.setEther
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: me/ether
+          method: put
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+
+  getEther:
+    handler: functions/me.get
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: me
+          method: get
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+
+  getContractStatus:
+    handler: functions/contract.get
+    environment:
+      environment: ${opt:stage}
+      contract: ${self:custom.${opt:stage}_contract}
+    events:
+      - http:
+          path: contract/status
+          method: get
+          integration: lambda
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+
+  sendConfirm:
+    name: ${opt:stage}SendConfirm
+    handler: handler.sendConfirm
+    environment:
+      DOMAIN_NAME: ${self:custom.${opt:stage}_domain}
+      PROTOCOL: ${self:custom.${opt:stage}_protocol}
+
+  postConfirmation:
+    handler: functions/me.postConfirmation
+    environment:
+        environment: ${opt:stage}
+
+  getSettings:
+    handler: functions/settings.get
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: settings
+          method: get
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+              - cognito:groups
+
+  setSettings:
+    handler: functions/settings.put
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: settings
+          method: put
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+              - cognito:groups
+
+  getTransactionList:
+    handler: functions/transactions.get
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: me/transactions
+          method: get
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - email
+
+  subscribe:
+    handler: functions/subscribe.post
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: subscribe
+          method: post
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_site_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+
+  referrals:
+    handler: functions/me.referrals
+    environment:
+      environment: ${opt:stage}
+    events:
+      - http:
+          path: me/referrals
+          method: get
+          integration: lambda
+          cors:
+            origin: ${self:custom.${opt:stage}_allowed_origin}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - Authorization
+            allowCredentials: true
+          authorizer:
+            name: authorizer
+            arn:  ${self:custom.${opt:stage}_auth_arn}
+            claims:
+              - sub
+
+  updateBtcWalletTable:
+    handler: functions/btc.updateTable
+    environment:
+      environment: ${opt:stage}

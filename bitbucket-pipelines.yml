@@ -1,0 +1,22 @@
+image: ayankovsky/yarn-awscli
+
+pipelines:
+  branches:
+    master:
+      - step:
+          script:
+            - yarn
+            - npm i -g serverless
+            - sls deploy --stage=prod
+            - sls deploy --stage=dev
+            - sls deploy --stage=local
+
+  custom:
+    deploy:
+      - step:
+          script:
+            - yarn
+            - npm i -g serverless
+            - sls deploy --stage=prod
+            - sls deploy --stage=dev
+            - sls deploy --stage=local
